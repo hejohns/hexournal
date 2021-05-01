@@ -14,17 +14,22 @@ import GI.Cairo.Render.Connector (renderWithContext)
 --import qualified GI.Gdk as Gdk
 import GHC.Int
 import Data.IORef
+import HeXournal.Core
 
 initUI :: IO Gtk.Application
 initUI = do
   app <- new Gtk.Application [#applicationId := "hexournal"]
   _ <- on app #activate (do
+      document <- newIORef ([] :: Document)
+      scratchStroke <- newIORef (Pen 0 0 [])
+      foo <- newIORef undefined
+      --
       appWin <- new Gtk.ApplicationWindow [#application := app, #startupId := "appWin id", #title := "appWin title"]
       drawingArea <- new Gtk.DrawingArea [#hasTooltip := True, #name := "drawingArea"]
       set appWin [#child := drawingArea]
       -- slightly irked out by that overload
       --id #setDrawFunc drawingArea (Just (drawCb ioRef))
-      Gtk.drawingAreaSetDrawFunc drawingArea (Just undefined)
+      Gtk.drawingAreaSetDrawFunc drawingArea (Just (drawCb foo))
       _ <- after drawingArea #resize resizeCb
       gestureStylus <- new Gtk.GestureStylus [#name := "gestureStylus"]
       Gtk.widgetAddController drawingArea gestureStylus

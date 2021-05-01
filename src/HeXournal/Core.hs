@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 
-module HeXournal.Core (
+module HeXournal.Core ( Document
+                      , Stroke(..)
 ) where
 
 import Numeric
