@@ -13,7 +13,6 @@ import GI.Gtk ()
 hexournal :: a -> IO ()
 hexournal x = do
   app <- initUI
-  id #unref app
   putStrLn "test"
 
 def = id

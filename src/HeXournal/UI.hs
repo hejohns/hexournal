@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE TypeApplications #-}
 
 module HeXournal.UI (
     initUI
@@ -13,16 +14,17 @@ import GI.Cairo.Render.Connector (renderWithContext)
 --import qualified GI.Gdk as Gdk
 import GHC.Int
 import Data.IORef
+import GHC.Word
 
 initUI :: IO Gtk.Application
 initUI = do
-  ioRef <- newIORef ""
+  ioRef <- newIORef undefined
   app <- new Gtk.Application [#applicationId := "hexournal"]
   on app #activate (activate app ioRef)
   id #run app Nothing
   return app
 
-activate :: Gtk.Application -> IORef a -> IO ()
+activate :: Gtk.Application -> IORef GI.Cairo.Context -> IO ()
 activate app ioRef = do
   win <- new Gtk.ApplicationWindow [#application := app, #title := "title"]
   dA <- new Gtk.DrawingArea []
@@ -30,10 +32,16 @@ activate app ioRef = do
   return False
   id #setDrawFunc dA (Just (drawCb ioRef))
   after dA #resize resizeCb
+  gS <- new Gtk.GestureStylus []
+  Gtk.widgetAddController dA gS
+  on gS #down $ stylusDownCb ioRef
+  on gS #proximity $ stylusProximityCb ioRef
+  on gS #motion $ stylusMotionCb ioRef
+  on gS #up $ stylusUpCb ioRef
   id #show win
   return ()
 
-drawCb :: IORef a -> Gtk.DrawingArea -> GI.Cairo.Context -> Int32 -> Int32 -> IO ()
+drawCb :: IORef GI.Cairo.Context -> Gtk.DrawingArea -> GI.Cairo.Context -> Int32 -> Int32 -> IO ()
 drawCb ioRef drawingArea cr width height = do
 {-
   renderWithContext (Cairo.setSourceRGB (fromIntegral 0) (fromIntegral 0) 1)  cr
@@ -42,6 +50,7 @@ drawCb ioRef drawingArea cr width height = do
   renderWithContext (Cairo.showText ("a" :: [Char])) cr
   putStrLn "drawing"
   -}
+  writeIORef ioRef cr
   renderWithContext (Cairo.setSourceRGB 1 0 1) cr
   renderWithContext (Cairo.moveTo 0 0) cr
   renderWithContext (Cairo.lineTo 100 100) cr
@@ -65,3 +74,27 @@ drawCb ioRef drawingArea cr width height = do
 
 resizeCb _ _ = do
   putStrLn "resized"
+
+stylusDownCb :: IORef GI.Cairo.Context -> Double -> Double-> IO()
+stylusDownCb ioRef x y = do
+  cr <- readIORef ioRef
+  renderWithContext (Cairo.setSourceRGB 0 1 0) cr
+  renderWithContext (Cairo.fill) cr
+
+stylusProximityCb :: IORef GI.Cairo.Context -> Double -> Double-> IO()
+stylusProximityCb ioRef x y = do
+  cr <- readIORef ioRef
+  renderWithContext (Cairo.setSourceRGB 0 1 1) cr
+  renderWithContext (Cairo.fill) cr
+
+stylusMotionCb :: IORef GI.Cairo.Context -> Double -> Double-> IO()
+stylusMotionCb ioRef x y = do
+  cr <- readIORef ioRef
+  renderWithContext (Cairo.setSourceRGB 1 1 0) cr
+  renderWithContext (Cairo.fill) cr
+
+stylusUpCb :: IORef GI.Cairo.Context -> Double -> Double-> IO()
+stylusUpCb ioRef x y = do
+  cr <- readIORef ioRef
+  renderWithContext (Cairo.setSourceRGB 0 1 1) cr
+  renderWithContext (Cairo.fill) cr
