@@ -1,0 +1,6 @@
+-- cabal.project
+
+packages:
+  hexournal.cabal
+
+package hexournal
