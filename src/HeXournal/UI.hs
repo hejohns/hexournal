@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE LambdaCase #-}
 
 module HeXournal.UI (
     initUI
@@ -16,38 +17,41 @@ import Data.IORef
 import HeXournal.Core
 import Control.Monad.Reader
 
-data UIState = UIState {document :: IORef Document, scratchStroke :: IORef Stroke}
+data UIState = UIState {drawingArea :: IORef Gtk.DrawingArea, document :: IORef Document, scratchStroke :: IORef Stroke}
 
 initUI :: IO Gtk.Application
 initUI = do
   app <- new Gtk.Application [#applicationId := "hexournal"]
   _ <- on app #activate (do
-      document <- newIORef $ newDocument $ Just Lined
-      scratchStroke <- newIORef (Pen 0 0 [])
-      foo <- newIORef undefined
+      dA <- newIORef undefined
+      doc <- newIORef $ newDocument $ Just Lined
+      ss <- newIORef (Pen 0 0 [])
+      let uiState = UIState { drawingArea = dA
+                            , document = doc
+                            , scratchStroke = ss
+                            }
       --
       appWin <- new Gtk.ApplicationWindow [#application := app, #startupId := "appWin id", #title := "appWin title"]
       drawingArea <- new Gtk.DrawingArea [#hasTooltip := True, #name := "drawingArea"]
       set appWin [#child := drawingArea]
       -- slightly irked out by that overload
       --id #setDrawFunc drawingArea (Just (drawCb ioRef))
-      Gtk.drawingAreaSetDrawFunc drawingArea $ Just $ drawCb $ UIState { document = document
-                                                                       , scratchStroke = scratchStroke
-                                                                       }
+      Gtk.drawingAreaSetDrawFunc drawingArea $ Just (drawCb uiState)
       _ <- after drawingArea #resize resizeCb
       gestureStylus <- new Gtk.GestureStylus [#name := "gestureStylus"]
       Gtk.widgetAddController drawingArea gestureStylus
-      _ <- on gestureStylus #down $ stylusDownCb undefined
-      _ <- on gestureStylus #proximity $ stylusProximityCb undefined
-      _ <- on gestureStylus #motion $ stylusMotionCb undefined
-      _ <- on gestureStylus #up $ stylusUpCb undefined
+      _ <- on gestureStylus #down $ stylusDownCb uiState
+      _ <- on gestureStylus #motion $ stylusMotionCb uiState
+      _ <- on gestureStylus #proximity $ stylusProximityCb uiState
+      _ <- on gestureStylus #up $ stylusUpCb uiState
       id #show appWin
       )
   _ <- #run app Nothing
   return app
 
 drawCb :: UIState -> (Gtk.DrawingArea -> GI.Cairo.Context -> Int32 -> Int32 -> IO ())
-drawCb uiState drawingArea cr width height = do
+drawCb uiState drawingArea' cr width height = do
+  writeIORef (drawingArea uiState) drawingArea'
 {-
   renderWithContext (Cairo.setSourceRGB (fromIntegral 0) (fromIntegral 0) 1)  cr
   renderWithContext Cairo.fill cr
@@ -57,10 +61,10 @@ drawCb uiState drawingArea cr width height = do
   -}
   -- when record dot syntax gets here
   --document <- readIORef uiState.document
-  document <- readIORef $ document uiState
-  scratchStroke <- readIORef $ scratchStroke uiState
-  runReaderT (drawDocument document) cr
-  runReaderT (drawStroke scratchStroke) cr
+  doc <- readIORef $ document uiState
+  ss <- readIORef $ scratchStroke uiState
+  runReaderT (drawDocument doc) cr
+  runReaderT (drawStroke ss) cr
   --renderWithContext (Cairo.setSourceRGB 1 0 1) cr
   --renderWithContext (Cairo.moveTo 0 0) cr
   --renderWithContext (Cairo.lineTo 100 100) cr
@@ -135,26 +139,38 @@ resizeCb :: Int32 -> Int32 -> IO ()
 resizeCb _ _ = do
   putStrLn "resized"
 
-stylusDownCb :: IORef GI.Cairo.Context -> Double -> Double -> IO()
-stylusDownCb ioRef x y = do
-  cr <- readIORef ioRef
-  renderWithContext (Cairo.setSourceRGB 0 1 0) cr
-  renderWithContext (Cairo.fill) cr
+stylusDownCb :: UIState -> (Double -> Double -> IO())
+stylusDownCb uiState x y = do
+  let ss = scratchStroke uiState
+  writeIORef ss (Pen 1 0.5 [(x, y)])
 
-stylusProximityCb :: IORef GI.Cairo.Context -> Double -> Double -> IO()
-stylusProximityCb ioRef x y = do
-  cr <- readIORef ioRef
-  renderWithContext (Cairo.setSourceRGB 0 1 1) cr
-  renderWithContext (Cairo.fill) cr
+stylusMotionCb :: UIState -> (Double -> Double-> IO())
+stylusMotionCb uiState x y = do
+  let dA = drawingArea uiState
+  dA' <- readIORef dA
+  let ss = scratchStroke uiState
+  modifyIORef' ss (\case {
+      Pen color width coords -> Pen color width (coords ++ [(x, y)])
+     ;Highlighter color width coords -> Highlighter color width (coords ++ [(x, y)])
+     })
+  Gtk.widgetQueueDraw  dA'
 
-stylusMotionCb :: IORef GI.Cairo.Context -> Double -> Double-> IO()
-stylusMotionCb ioRef x y = do
-  cr <- readIORef ioRef
-  renderWithContext (Cairo.setSourceRGB 1 1 0) cr
-  renderWithContext (Cairo.fill) cr
+stylusProximityCb :: UIState -> (Double -> Double -> IO())
+stylusProximityCb uiState x y = do
+  return ()
 
-stylusUpCb :: IORef GI.Cairo.Context -> Double -> Double-> IO()
-stylusUpCb ioRef x y = do
-  cr <- readIORef ioRef
-  renderWithContext (Cairo.setSourceRGB 0 1 1) cr
-  renderWithContext (Cairo.fill) cr
+stylusUpCb :: UIState -> (Double -> Double-> IO())
+stylusUpCb uiState x y = do
+  let dA = drawingArea uiState
+  dA' <- readIORef dA
+  let doc = document uiState
+  let ss = scratchStroke uiState
+  ss' <- readIORef ss
+  modifyIORef' doc (`addStroke` ss')
+  Gtk.widgetQueueDraw  dA'
+
+addStroke :: Document -> Stroke -> Document
+addStroke (dhd:dtl) stroke = case dhd of
+  Page background (lhd:ltl) -> (Page background ((lhd ++ [stroke]):ltl)):dtl
+  Page background [] -> (Page background ([[stroke]])):dtl
+addStroke [] stroke = undefined
