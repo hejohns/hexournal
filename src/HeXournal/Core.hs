@@ -1,7 +1,14 @@
 {-# LANGUAGE GADTs #-}
+-- we don't actually use GADTs, but imo it looks nicer
 
 module HeXournal.Core ( Document
+                      , Page(Page)
+                      , Background(Blank, Lined)
+                      , Layer
                       , Stroke(..)
+                      , Color
+                      , Width
+                      , Coordinate
 ) where
 
 import Numeric
@@ -10,6 +17,7 @@ import Data.List
 type Document = [Page]
 data Page where Page :: Background -> [Layer] -> Page
 data Background where
+  Blank :: Background
   Lined :: Background
 type Layer = [Stroke]
 data Stroke where
@@ -17,7 +25,7 @@ data Stroke where
   Highlighter :: Color -> Width -> [Coordinate] -> Stroke
 type Color = Integer
 type Width = Double
-data Coordinate where Coordinate :: Double -> Double -> Coordinate
+type Coordinate = (Double, Double)
 
 newDocument :: Maybe Background -> Document
 newDocument Nothing = [Page Lined []]
@@ -25,7 +33,7 @@ newDocument (Just b) = [Page b []]
 
 erase :: Layer -> Coordinate -> Width -> Layer
 erase [] _ _ = []
-erase strokes (Coordinate x y) w = map id strokes
+erase strokes (x, y) w = map id strokes
 
 erase' :: Stroke -> Coordinate -> Width -> Stroke
 erase' s@(Pen _ _ []) _ _ = s

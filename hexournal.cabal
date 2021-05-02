@@ -26,7 +26,7 @@ extra-source-files:
 library
     hs-source-dirs:   src
     exposed-modules:  HeXournal
-                      HeXournal.Main
+                      HeXournal.Core
                       HeXournal.UI
     build-depends:    base ^>=4.14.0.0
                      ,haskell-gi-base
@@ -35,10 +35,9 @@ library
                      ,gi-cairo
                      ,gi-cairo-render >=0.1.0
                      ,gi-cairo-connector
+                     ,mtl
     default-language: Haskell2010
     ghc-options:       -Wall
-                       -threaded
-                       -with-rtsopts=-N
                        -O0
 
 executable hexournal
