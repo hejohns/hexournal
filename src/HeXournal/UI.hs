@@ -59,8 +59,8 @@ drawCb uiState drawingArea cr width height = do
   --document <- readIORef uiState.document
   document <- readIORef $ document uiState
   scratchStroke <- readIORef $ scratchStroke uiState
-  drawDocument document
-  drawStroke scratchStroke
+  runReaderT (drawDocument document) cr
+  runReaderT (drawStroke scratchStroke) cr
   --renderWithContext (Cairo.setSourceRGB 1 0 1) cr
   --renderWithContext (Cairo.moveTo 0 0) cr
   --renderWithContext (Cairo.lineTo 100 100) cr
@@ -83,62 +83,65 @@ drawCb uiState drawingArea cr width height = do
   --Cairo.setSourceSurface cr 
   return ()
 
-drawDocument :: Document -> Reader GI.Cairo.Context (IO ())
-drawDocument = mapM drawPage
+drawDocument :: Document -> ReaderT GI.Cairo.Context IO ()
+drawDocument = mapM_ drawPage
 
-drawPage :: Page -> Reader GI.Cairo.Context (IO ())
+drawPage :: Page -> ReaderT GI.Cairo.Context IO ()
 drawPage (Page background layers) = do
   cr <- ask
   drawBackground background
-  mapM drawLayer layers
-  return $ return ()
+  mapM_ drawLayer layers
 
-drawBackground :: Background -> Reader GI.Cairo.Context (IO ())
+drawBackground :: Background -> ReaderT GI.Cairo.Context IO ()
 drawBackground Blank = do
   cr <- ask
-  renderWithContext (Cairo.setSourceRGB 0 0 0) cr
-  renderWithContext Cairo.fill cr
-  return $ return ()
+  liftIO $ renderWithContext (Cairo.setSourceRGB 0 0 0) cr
+  liftIO $ renderWithContext Cairo.fill cr
 drawBackground Lined = do
   --for testing
   cr <- ask
-  renderWithContext (Cairo.setSourceRGB 1 0 0) cr
-  renderWithContext (Cairo.moveTo 100 0) cr
-  renderWithContext (Cairo.lineTo 100 1000) cr
-  renderWithContext Cairo.stroke cr
-  return $ return ()
+  liftIO $ renderWithContext (Cairo.setSourceRGB 1 0 0) cr
+  liftIO $ renderWithContext (Cairo.moveTo 100 0) cr
+  liftIO $ renderWithContext (Cairo.lineTo 100 1000) cr
+  liftIO $ renderWithContext Cairo.stroke cr
 
-drawLayer :: Layer -> Reader GI.Cairo.Context (IO ())
-drawLayer = mapM drawStroke
+drawLayer :: Layer -> ReaderT GI.Cairo.Context IO ()
+drawLayer = mapM_ drawStroke
 
-drawStroke :: Stroke -> Reader GI.Cairo.Context (IO ())
+drawStroke :: Stroke -> ReaderT GI.Cairo.Context IO ()
 drawStroke (Pen color width coordinates) = do
   cr <- ask
-  renderWithContext (Cairo.setSourceRGB 0 0 (fromIntegral color)) cr
-  let f coords = case coords of
-            hd1:hd2:tl -> do
-              renderWithContext (Cairo.moveTo (fst hd1) (snd hd1)) cr
-              renderWithContext (Cairo.lineTo (fst hd2) (snd hd2)) cr
-              renderWithContext Cairo.stroke cr
-              f tl
-            _ -> return $ return ()
-  return $ f coordinates
+  liftIO $ renderWithContext (Cairo.setSourceRGB 0 0 (fromIntegral color)) cr
+  liftIO $ renderWithContext (Cairo.setLineWidth width) cr
+  drawStroke' coordinates
 drawStroke (Highlighter color width coordinates) = do
   cr <- ask
-  renderWithContext (Cairo.setSourceRGB 0 0 (fromIntegral color)) cr
-  return $ return ()
+  liftIO $ renderWithContext (Cairo.setSourceRGBA 0 0 (fromIntegral color) 0.5) cr
+  liftIO $ renderWithContext (Cairo.setLineWidth width) cr
+  drawStroke' coordinates
+
+drawStroke' :: [Coordinate] -> ReaderT GI.Cairo.Context IO ()
+drawStroke' coords = do
+  cr <- ask
+  case coords of
+    hd1:hd2:tl -> do
+      liftIO $ renderWithContext (uncurry Cairo.moveTo hd1) cr
+      liftIO $ renderWithContext (uncurry Cairo.lineTo hd2) cr
+      liftIO $ renderWithContext Cairo.stroke cr
+      drawStroke' tl
+    _ -> liftIO $ return ()
 
 resizeCb :: Int32 -> Int32 -> IO ()
 resizeCb _ _ = do
   putStrLn "resized"
 
-stylusDownCb :: IORef GI.Cairo.Context -> Double -> Double-> IO()
+stylusDownCb :: IORef GI.Cairo.Context -> Double -> Double -> IO()
 stylusDownCb ioRef x y = do
   cr <- readIORef ioRef
   renderWithContext (Cairo.setSourceRGB 0 1 0) cr
   renderWithContext (Cairo.fill) cr
 
-stylusProximityCb :: IORef GI.Cairo.Context -> Double -> Double-> IO()
+stylusProximityCb :: IORef GI.Cairo.Context -> Double -> Double -> IO()
 stylusProximityCb ioRef x y = do
   cr <- readIORef ioRef
   renderWithContext (Cairo.setSourceRGB 0 1 1) cr

@@ -9,6 +9,7 @@ module HeXournal.Core ( Document
                       , Color
                       , Width
                       , Coordinate
+                      , newDocument
 ) where
 
 import Numeric
