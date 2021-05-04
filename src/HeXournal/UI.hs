@@ -132,7 +132,7 @@ drawStroke' coords = do
       liftIO $ renderWithContext (uncurry Cairo.moveTo hd1) cr
       liftIO $ renderWithContext (uncurry Cairo.lineTo hd2) cr
       liftIO $ renderWithContext Cairo.stroke cr
-      drawStroke' tl
+      drawStroke' (hd2:tl)
     _ -> liftIO $ return ()
 
 resizeCb :: Int32 -> Int32 -> IO ()
