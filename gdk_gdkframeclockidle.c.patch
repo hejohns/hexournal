@@ -1,0 +1,13 @@
+diff --git a/gdk/gdkframeclockidle.c b/gdk/gdkframeclockidle.c
+index 4870a110a6..b92e25f637 100644
+--- a/gdk/gdkframeclockidle.c
++++ b/gdk/gdkframeclockidle.c
+@@ -35,7 +35,7 @@
+ #include <windows.h>
+ #endif
+ 
+-#define FRAME_INTERVAL 16667 /* microseconds */
++#define FRAME_INTERVAL 4166 /* microseconds */
+ 
+ typedef enum {
+   SMOOTH_PHASE_STATE_VALID = 0,    /* explicit, since we count on zero-init */
