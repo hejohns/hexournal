@@ -1,0 +1,22 @@
+TODO
+------------------------------------------------------------
+
+- there don't seem to be any nice canvas libraries for gtk4
+  (although I'm quite ignorant on the subject)
+  can we write our own dumb canvas handling?
+  eg a page is painted in entirety to an in memory cairo buffer
+  of some scale __s__, and the view for that page will be taken
+  as a rectangular mask based on current UI size (in x/y pixels)
+  then we stitch the masked crops together to form the final view
+  which we dump to the screen
+  so we repaint on a "damaged page" basis (potentially many if
+  the current UI view has multiple pages)
+  ...
+  zooming in/out is done w/ setting __s__
+  ...
+  does this make any sense?
+
+- want OverloadedRecordDot (requires ghc >= 9.2)
+  when will dependencies compile under ghc 9.2??
+  can ghc compile the dependencies w/ a different version of
+  ghc v main?
