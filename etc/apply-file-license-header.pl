@@ -7,17 +7,18 @@ use strict;
 use warnings FATAL => qw(uninitialized);
 use autodie;
 
-use File::Basename qw(basename fileparse);
+use File::Basename qw(basename dirname fileparse);
 use File::Find qw(find);
 use File::Spec;
 use Cwd qw(abs_path);
 
 sub print_help{
 my $zero = basename $0;
+my $dir = dirname $0;
 my $help = <<~"EOF"
 Usage: ./$zero
 Description:
-    fill this out
+    must be called in $dir
 EOF
 ;
 print $help;
@@ -32,7 +33,7 @@ my $project_dir = abs_path(File::Spec->updir($0));
 # map file extentions to \@header -> @header
 my %map_header_lines = ( hs => sub{$_ = shift; map {'-- ' . $_} @{$_}}
 );
-my %delete_contiguous_match = ( hs => sub{$_ = shift; $_ =~ m/^-- /}
+my %delete_contiguous_match = ( hs => sub{$_ = shift; $_ =~ m/^--/}
 );
 ##############################
 
