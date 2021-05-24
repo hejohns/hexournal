@@ -18,13 +18,34 @@
 -- +Additional information on the GPL(v2) (and unofficial translations)
 -- +can be found there.
 
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-} -- for TypeError
+
 module HeXournal.Config ( HeXournalConfig
                         , defaultConfig
                         ) where
 
-newtype HeXournalConfig = HeXournalConfig { z :: Int
-                                          , y :: Int
-                                          }
+import GHC.TypeLits
+
+data Config :: (Symbol, Symbol) -> *
+
+type family FirstSymOK c where
+  FirstSymOK (Config "one") = True
+  FirstSymOK (Config "two") = True
+  FirstSymOK x = TypeError (Text "Not a valid config")
+
+class FirstSymOK c ~ True => FirstSym c where
+  doTheThing :: c -> String
+
+type family SecondSymOK c where
+  SecondSymOK (Config "three") = True
+  SecondSymOK (Config "four") = True
+  SecondSymOK x = TypeError (Text "Not a valid config")
+
+class SecondSymOK c ~ True => SecondSym c where
+  doTheOtherThing :: c -> Int
 
 defaultConfig :: HeXournalConfig
 defaultConfig = HeXournalConfig { z = 0
