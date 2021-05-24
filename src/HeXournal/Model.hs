@@ -27,10 +27,18 @@ module HeXournal.Model ( Document
                        , Coordinate
                        --
                        , newDocument
+                       , newDefaultA4Document
+                       , newDefaultUSDocument
+                       , newPage
                        ) where
 
-data Document = Document [Page] Page [Page]
-data Page = Page Background [Layer]
+type Document = [Page]
+data Page = Page
+  { width :: Double
+  , height :: Double
+  , background :: Background
+  , layers :: [Layer]
+  }
 data Background = Blank
                 | Lined
 type Layer = [Stroke]
@@ -40,5 +48,15 @@ data Stroke = Pen {color :: Color, width :: Double, xy :: [Coordinate]}
 type Color = Int
 newtype Coordinate = Coordinate {x :: Double, y :: Double}
 
-newDocument :: Background -> Document
-newDocument b = Document [] (b []) []
+newDocument :: (Double, Double) -> Background -> Document
+newDocument wh b = [newPage wh b]
+
+newDefaultA4Document :: Document
+newDefaultA4Document = newDocument (210, 297) Lined
+
+newDefaultUSDocument :: Document
+newDefaultUSDocument = newDocument (216, 279) Lined
+
+newPage :: (Double, Double) -> Background -> Page
+newPage (w, h) b = 
+  Page {width = w, height = h, background = b, layers = []}
