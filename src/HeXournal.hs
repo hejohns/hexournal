@@ -18,9 +18,10 @@
 -- +Additional information on the GPL(v2) (and unofficial translations)
 -- +can be found there.
 
-module HeXournal ( hexournal
-                 , defaultConfig
-                 ) where
+module HeXournal
+  ( hexournal
+  , defaultConfig
+  ) where
 
 import HeXournal.Config
 

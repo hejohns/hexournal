@@ -23,9 +23,10 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-} -- for TypeError
 
-module HeXournal.Config ( HeXournalConfig
-                        , defaultConfig
-                        ) where
+module HeXournal.Config
+  ( HeXournalConfig
+  , defaultConfig
+  ) where
 
 import GHC.TypeLits
 
@@ -48,6 +49,7 @@ class SecondSymOK c ~ True => SecondSym c where
   doTheOtherThing :: c -> Int
 
 defaultConfig :: HeXournalConfig
-defaultConfig = HeXournalConfig { z = 0
-                                , y = 1
-                                }
+defaultConfig = HeXournalConfig
+  { z = 0
+  , y = 1
+  }

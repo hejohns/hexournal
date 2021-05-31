@@ -18,19 +18,20 @@
 -- +Additional information on the GPL(v2) (and unofficial translations)
 -- +can be found there.
 
-module HeXournal.Model ( Document
-                       , Page(Page)
-                       , Background(..)
-                       , Layer
-                       , Stroke(..)
-                       , Color
-                       , Coordinate
-                       --
-                       , newDocument
-                       , newDefaultA4Document
-                       , newDefaultUSDocument
-                       , newPage
-                       ) where
+module HeXournal.Model
+  ( Document
+  , Page(Page)
+  , Background(..)
+  , Layer
+  , Stroke(..)
+  , Color
+  , Coordinate
+  --
+  , newDocument
+  , newDefaultA4Document
+  , newDefaultUSDocument
+  , newPage
+  ) where
 
 type Document = [Page]
 data Page = Page
@@ -39,14 +40,22 @@ data Page = Page
   , background :: Background
   , layers :: [Layer]
   }
-data Background = Blank
-                | Lined
+
+data Background
+  = Blank
+  | Lined
+
 type Layer = [Stroke]
-data Stroke = Pen {color :: Color, width :: Double, xy :: [Coordinate]}
-            | PressurePen {color :: Color, wxy :: [(Double, Coordinate)]}
-            | Highlighter {color :: Color, width :: Double, xy :: [Coordinate]}
+data Stroke
+  = Pen {color :: Color, width :: Double, xy :: [Coordinate]}
+  | PressurePen {color :: Color, wxy :: [(Double, Coordinate)]}
+  | Highlighter {color :: Color, width :: Double, xy :: [Coordinate]}
+
 type Color = Int
-newtype Coordinate = Coordinate {x :: Double, y :: Double}
+data Coordinate = Coordinate
+  { x :: Double
+  , y :: Double
+  }
 
 newDocument :: (Double, Double) -> Background -> Document
 newDocument wh b = [newPage wh b]
