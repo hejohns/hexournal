@@ -15,8 +15,7 @@
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 -- 
 -- +Or see <http://www.gnu.org/licenses/>.
--- +Additional information on the GPL(v2) (and unofficial translations)
--- +can be found there.
+-- +Additional information on the GPL(v2) can be found there.
 
 module HeXournal.Model
   ( Document
@@ -33,17 +32,19 @@ module HeXournal.Model
   , newPage
   ) where
 
-type Document = [Page]
+type Document = ([Page], Page, [Page])
 data Page = Page
   { width :: Double
   , height :: Double
+  , background00 :: Coordinate
   , background :: Background
-  , layers :: [Layer]
+  , layers :: ([Layer], Layer, [Layer])
   }
 
 data Background
   = Blank
-  | Lined
+  | LinedA4
+  | LinedUS
 
 type Layer = [Stroke]
 data Stroke
@@ -52,20 +53,17 @@ data Stroke
   | Highlighter {color :: Color, width :: Double, xy :: [Coordinate]}
 
 type Color = Int
-data Coordinate = Coordinate
-  { x :: Double
-  , y :: Double
-  }
+type Coordinate = (Double, Double)
 
-newDocument :: (Double, Double) -> Background -> Document
-newDocument wh b = [newPage wh b]
+newDocument :: (Double, Double) -> Coordinate -> Background -> Document
+newDocument wh b00 b = ([], [newPage wh b00 b], [])
 
 newDefaultA4Document :: Document
-newDefaultA4Document = newDocument (210, 297) Lined
+newDefaultA4Document = newDocument (210, 297) LinedA4
 
 newDefaultUSDocument :: Document
-newDefaultUSDocument = newDocument (216, 279) Lined
+newDefaultUSDocument = newDocument (216, 279) LinedUS
 
-newPage :: (Double, Double) -> Background -> Page
-newPage (w, h) b = 
-  Page {width = w, height = h, background = b, layers = []}
+newPage :: (Double, Double) -> Coordinate -> Background -> Page
+newPage (w, h) b00 b = 
+  Page {width = w, height = h, background00 = b00, background = b, layers = ([], [], [])}

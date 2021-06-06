@@ -15,8 +15,7 @@
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 -- 
 -- +Or see <http://www.gnu.org/licenses/>.
--- +Additional information on the GPL(v2) (and unofficial translations)
--- +can be found there.
+-- +Additional information on the GPL(v2) can be found there.
 
 module HeXournal
   ( hexournal

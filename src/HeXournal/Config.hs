@@ -15,8 +15,7 @@
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 -- 
 -- +Or see <http://www.gnu.org/licenses/>.
--- +Additional information on the GPL(v2) (and unofficial translations)
--- +can be found there.
+-- +Additional information on the GPL(v2) can be found there.
 
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
@@ -40,6 +39,9 @@ type family FirstSymOK c where
 class FirstSymOK c ~ True => FirstSym c where
   doTheThing :: c -> String
 
+instance FirstSym (Config ("a", b)) where
+  doTheThing _ = "blah"
+
 type family SecondSymOK c where
   SecondSymOK (Config "three") = True
   SecondSymOK (Config "four") = True
@@ -48,8 +50,5 @@ type family SecondSymOK c where
 class SecondSymOK c ~ True => SecondSym c where
   doTheOtherThing :: c -> Int
 
-defaultConfig :: HeXournalConfig
-defaultConfig = HeXournalConfig
-  { z = 0
-  , y = 1
-  }
+defaultConfig :: ("a", "b")
+defaultConfig = undefined
