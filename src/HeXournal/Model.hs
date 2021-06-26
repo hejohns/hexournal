@@ -1,24 +1,27 @@
 -- HeXournal/Model.hs
--- 
+--
+-- * The 'M' in MVC
+-- *
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
 -- the Free Software Foundation; either version 2 of the License, or
 -- (at your option) any later version.
--- 
+--
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 -- GNU General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU General Public License along
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
--- 
+--
 -- +Or see <http://www.gnu.org/licenses/>.
 -- +Additional information on the GPL(v2) can be found there.
 
 module HeXournal.Model
-  ( Document
+  ( Model
+  , Document
   , Page(Page)
   , Background(..)
   , Layer
@@ -32,12 +35,15 @@ module HeXournal.Model
   , newPage
   ) where
 
+--            Undo Stack  Current   Redo Stack
+type Model = ([Document], Document, [Document])
+--               2, 1    3     4, 5
 type Document = ([Page], Page, [Page])
 data Page = Page
-  { width :: Double
-  , height :: Double
+  { xyMax :: Coordinate
   , background00 :: Coordinate
   , background :: Background
+  --           2, 1     3      4, 5
   , layers :: ([Layer], Layer, [Layer])
   }
 
@@ -55,15 +61,18 @@ data Stroke
 type Color = Int
 type Coordinate = (Double, Double)
 
-newDocument :: (Double, Double) -> Coordinate -> Background -> Document
+newModel :: Document -> Model
+newModel doc = ([], doc, [])
+
+newDocument :: Coordinate -> Coordinate -> Background -> Document
 newDocument wh b00 b = ([], [newPage wh b00 b], [])
 
 newDefaultA4Document :: Document
-newDefaultA4Document = newDocument (210, 297) LinedA4
+newDefaultA4Document = newDocument (210, 297) (0, 0) LinedA4
 
 newDefaultUSDocument :: Document
-newDefaultUSDocument = newDocument (216, 279) LinedUS
+newDefaultUSDocument = newDocument (216, 279) (0, 0) LinedUS
 
-newPage :: (Double, Double) -> Coordinate -> Background -> Page
-newPage (w, h) b00 b = 
-  Page {width = w, height = h, background00 = b00, background = b, layers = ([], [], [])}
+newPage :: Coordinate -> Coordinate -> Background -> Page
+newPage wh b00 b =
+  Page {xyMax = wh, background00 = b00, background = b, layers = ([], [], [])}

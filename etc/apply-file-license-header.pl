@@ -38,10 +38,13 @@ my $file_license_header = 'file-license-header.txt';
 my $project_dir = abs_path(File::Spec->updir($0));
 # map file extentions to \@header -> @header
 my %map2comment = ( '.hs' => sub{$_ = shift; map {'-- ' . $_} @{$_}}
+                  , '.c' => sub{$_ = shift; map {'// ' . $_} @{$_}}
 );
 my %is_comment = ( '.hs' => sub{shift =~ m/^--/}
+                 , '.c' => sub{shift =~ m/^\/\//}
 );
 my %is_preserved_comment = ( '.hs' => sub{shift =~ m/^-- \*/}
+                           , '.c' => sub{shift =~ m/^\/\/ \*/}
 );
 ##############################
 
@@ -50,7 +53,7 @@ my @flh;
 # see File::Find
 sub wanted{
     # [warning] File::Find and File::Spec are very broken
-    my ($filename, $dir, $file_extension) = fileparse($File::Find::name, qw(.hs));
+    my ($filename, $dir, $file_extension) = fileparse($File::Find::name, (qr/\.hs/, qr/\.c/));
     unless(defined $file_extension and $file_extension ne ''){
         return 1;
     }
@@ -77,6 +80,8 @@ sub wanted{
         @preserved_comments,
         $map2comment{$file_extension}(\@flh));
     my @file = (@header, @file);
+    # remove trailing whitespace
+    @file = map {$_ =~ s/\s*$//; $_ . "\n"} @file;
     close($FH);
     open($FH, '>:encoding(UTF-8)', $filename . $file_extension);
     print $FH @file;
