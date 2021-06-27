@@ -16,6 +16,7 @@
 --
 -- +Or see <http://www.gnu.org/licenses/>.
 -- +Additional information on the GPL(v2) can be found there.
+{-# LANGUAGE RecordDotSyntax #-}
 
 module HeXournal.Controller
   ( UIState
@@ -32,11 +33,12 @@ import Data.IORef
 
 type pxCoordinate = Coordinate
 data UIState = UIState
-  { model :: Model
-  , pxPerMm :: Double
-  , xy00 :: pxCoordinate
-  , xyMax :: pxCoordinate
-  , scratchStroke :: ()
+  { model :: IORef Model
+  , pxPerMm :: IORef Double
+  , xy00 :: IORef pxCoordinate
+  , xyMax :: IORef pxCoordinate
+  , scratchStroke :: IORef ()
+  , drawingArea :: Gtk.DrawingArea
   }
 
 initUI :: IO Gtk.Application
@@ -47,7 +49,19 @@ initUI = do
       drawingArea <- new Gtk.DrawingArea [#name := "drawingArea", #hasTooltip := True]
       set appMainWin [#child := drawingArea]
       --
-      uiState <- newIORef newUIState
+      model <- newIORef $ newModel doc
+      pxPerMm <- newIORef undefined
+      xy00 <- newIORef (0, 0)
+      xyMax <- newIORef undefined
+      scratchStroke <- newIORef ()
+      let uiState = UIState
+        { model = model
+        , pxPerMm = pxPerMm
+        , xy00 = xy00
+        , xyMax = xyMax
+        , scratchStroke = scratchStroke
+        , drawingArea = drawingArea
+        }
       --
       Gtk.drawingAreaSetDrawFunc drawingArea $ Just $ cbOnDrawingAreaDraw uiState
       _ <- after drawingArea #resize $ cbOnDrawingAreaResize uiState
@@ -61,20 +75,15 @@ initUI = do
       )
   _ <- #run app Nothing
   return app
-  where
-  newUIState :: UIState
-  newUIState = UIState
-    { model = newModel doc
-    , pxPerMm = undefined
-    , xy00 = (0, 0)
-    , xyMax = undefined
-    , scratchStroke = ()
-    }
 
 cbOnDrawingAreaDraw :: UIState -> (Gtk.DrawingArea -> GI.Cairo.Context -> Int32 -> Int32 -> IO ())
-cbOnDrawingAreaDraw uiState dA cr w h = withManagedPtr cr $ \cr -> draw_cb cr undefined
+cbOnDrawingAreaDraw uiState dA cr w h = do
+  withManagedPtr cr $ \cr -> draw_cb cr undefined
+  return ()
 cbOnDrawingAreaResize :: UIState -> (Int32 -> Int32 -> IO ())
-cbOnDrawingAreaResize uiState w h = modifyIORef' uiState $ \x -> x {xyMax = (w, h)}
+cbOnDrawingAreaResize uiState w h = do
+  modifyIORef' uiState.xyMax $ \_ -> (w, h)
+  Gtk.widgetQueueDraw uiState.drawingArea
 cbOnStylusDown :: UIState -> (Double -> Double -> IO ())
 cbOnStylusMotion :: UIState -> (Double -> Double -> IO ())
 cbOnStylusProximity :: UIState -> (Double -> Double -> IO ())
