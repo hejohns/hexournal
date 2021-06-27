@@ -20,6 +20,7 @@
 
 module HeXournal.Controller
   ( UIState
+  , Tool
   ) where
 
 import HeXournal.Model
@@ -39,7 +40,13 @@ data UIState = UIState
   , xy00 :: IORef pxCoordinate
   , xyMax :: IORef pxCoordinate
   , scratchStroke :: IORef ()
+  , tool :: IORef Tool
   }
+
+data Tool
+  = Pen
+  | Eraser
+  | Highlighter
 
 initUI :: IO Gtk.Application
 initUI = do
@@ -55,6 +62,7 @@ initUI = do
       xy00' <- newIORef (0, 0)
       xyMax' <- newIORef undefined
       scratchStroke' <- newIORef ()
+      tool <- newIORef Pen
       let uiState = UIState
         { model = model'
         , drawingArea = drawingArea'
@@ -62,6 +70,7 @@ initUI = do
         , xy00 = xy00'
         , xyMax = xyMax'
         , scratchStroke = scratchStroke'
+        , tool = tool'
         }
       --
       Gtk.drawingAreaSetDrawFunc drawingArea $ Just $ cbOnDrawingAreaDraw uiState
@@ -82,11 +91,26 @@ cbOnDrawingAreaDraw uiState dA cr w h = do
   modifyIORef' uiState.drawingArea $ \_ -> dA
   withManagedPtr cr $ \cr -> draw_cb cr undefined
   return ()
+
 cbOnDrawingAreaResize :: UIState -> (Int32 -> Int32 -> IO ())
 cbOnDrawingAreaResize uiState w h = do
   modifyIORef' uiState.xyMax $ \_ -> (w, h)
-  Gtk.widgetQueueDraw uiState.drawingArea
+  drawingArea' <- readIORef uiState.drawingArea
+  Gtk.widgetQueueDraw drawingArea'
+
 cbOnStylusDown :: UIState -> (Double -> Double -> IO ())
+cbOnStylusDown uiState x y = do
+  return ()
+
 cbOnStylusMotion :: UIState -> (Double -> Double -> IO ())
+cbOnStylusMotion uiState x y = do
+  return ()
+
 cbOnStylusProximity :: UIState -> (Double -> Double -> IO ())
+cbOnStylusProximity uiState x y = do
+  -- set tooltip according to uiState.tool
+  return ()
+
 cbOnStylusUp :: UIState -> (Double -> Double -> IO ())
+cbOnStylusUp uiState x y = do
+  return ()

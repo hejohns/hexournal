@@ -24,3 +24,8 @@ module HeXournal.View
 import HeXournal.Controller
 
 viewDocument :: UIState -> IO ()
+
+viewTool :: Tool -> IO ()
+viewTool Pen = return ()
+viewTool Eraser = return ()
+viewTool Highlighter = return ()
