@@ -34,11 +34,11 @@ import Data.IORef
 type pxCoordinate = Coordinate
 data UIState = UIState
   { model :: IORef Model
+  , drawingArea :: IORef Gtk.DrawingArea
   , pxPerMm :: IORef Double
   , xy00 :: IORef pxCoordinate
   , xyMax :: IORef pxCoordinate
   , scratchStroke :: IORef ()
-  , drawingArea :: Gtk.DrawingArea
   }
 
 initUI :: IO Gtk.Application
@@ -49,18 +49,19 @@ initUI = do
       drawingArea <- new Gtk.DrawingArea [#name := "drawingArea", #hasTooltip := True]
       set appMainWin [#child := drawingArea]
       --
-      model <- newIORef $ newModel doc
-      pxPerMm <- newIORef undefined
-      xy00 <- newIORef (0, 0)
-      xyMax <- newIORef undefined
-      scratchStroke <- newIORef ()
+      model' <- newIORef $ newModel doc
+      drawingArea' <- newIORef drawingArea
+      pxPerMm' <- newIORef undefined
+      xy00' <- newIORef (0, 0)
+      xyMax' <- newIORef undefined
+      scratchStroke' <- newIORef ()
       let uiState = UIState
-        { model = model
-        , pxPerMm = pxPerMm
-        , xy00 = xy00
-        , xyMax = xyMax
-        , scratchStroke = scratchStroke
-        , drawingArea = drawingArea
+        { model = model'
+        , drawingArea = drawingArea'
+        , pxPerMm = pxPerMm'
+        , xy00 = xy00'
+        , xyMax = xyMax'
+        , scratchStroke = scratchStroke'
         }
       --
       Gtk.drawingAreaSetDrawFunc drawingArea $ Just $ cbOnDrawingAreaDraw uiState
@@ -78,6 +79,7 @@ initUI = do
 
 cbOnDrawingAreaDraw :: UIState -> (Gtk.DrawingArea -> GI.Cairo.Context -> Int32 -> Int32 -> IO ())
 cbOnDrawingAreaDraw uiState dA cr w h = do
+  modifyIORef' uiState.drawingArea $ \_ -> dA
   withManagedPtr cr $ \cr -> draw_cb cr undefined
   return ()
 cbOnDrawingAreaResize :: UIState -> (Int32 -> Int32 -> IO ())
