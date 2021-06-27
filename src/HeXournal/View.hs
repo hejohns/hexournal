@@ -21,4 +21,6 @@ module HeXournal.View
   (
   ) where
 
+import HeXournal.Controller
+
 viewDocument :: UIState -> IO ()

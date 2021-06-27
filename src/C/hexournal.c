@@ -16,6 +16,7 @@
 //
 // +Or see <http://www.gnu.org/licenses/>.
 // +Additional information on the GPL(v2) can be found there.
+
 #include <cairo.h>
 
 cairo_surface_t *page_image_surface;
