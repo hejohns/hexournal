@@ -32,7 +32,11 @@ static void cleanup(){
 
 extern const struct argp argp; // see argp.c
 
+#define GC_DEBUG
+#include <gc.h>
 int main(int argc, char *argv[]){
+    GC_INIT();
+    GC_enable_incremental();
     // hs_init before argp_parse to parse out GHC's +/-RTS options
     hs_init(&argc, &argv);
     if(atexit(&cleanup)){
