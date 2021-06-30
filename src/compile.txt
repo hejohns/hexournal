@@ -1,1 +1,3 @@
 ghc -optc -std=c11 -no-hs-main argp.c main.c
+ghc -optc -std=c11 -optc -I/usr/lib/x86_64-linux-gnu/perl/5.32.1/CORE -optc -L/usr/lib/x86_64-linux-gnu/ -no-hs-main perl.c -optc -lperl argp.c main.c
+ghc -optc -std=c11 -optc -ggdb -optc -I/usr/lib/x86_64-linux-gnu/perl/5.32.1/CORE -optc -L/usr/lib/x86_64-linux-gnu/ -no-hs-main -lperl my_perl.c argp.c main.c

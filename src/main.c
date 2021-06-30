@@ -9,6 +9,7 @@
 #include <argp.h>
 #include <errno.h>
 #include <stdbool.h>
+#include "my_perl.h"
 
 bool verbose = false;
 
@@ -26,6 +27,7 @@ static inline int exit_with_code(){
 }
 static void cleanup(){
     hs_exit();
+    my_perl_free();
 }
 
 extern const struct argp argp; // see argp.c
@@ -41,6 +43,9 @@ int main(int argc, char *argv[]){
     if(argp_errno = argp_parse(&argp, argc, argv, 0, NULL, NULL)){
         exit_errno = argp_errno;
         exit_with_code();
+    }
+    if(my_perl_init()){
+        fprintf(stderr, "[warning] perl failed to initialize\n");
     }
     // jump into HeXourna.hs
     if(exit_errno){
